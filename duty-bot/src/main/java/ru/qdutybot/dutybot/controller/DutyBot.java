@@ -1,8 +1,8 @@
 package ru.qdutybot.dutybot.controller;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -18,14 +18,16 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 
+@Getter
+@Setter
 @Slf4j
 @Component
 public class DutyBot extends TelegramLongPollingBot {
 
-    public LinkedHashMap<String, String> map;
-
-    private static final Logger LOG = LoggerFactory.getLogger(DutyBot.class);
+    private LinkedHashMap<String, String> map = new LinkedHashMap<>();
+    private String message;
 
 
     public DutyBot(@Value("${bot.token}") String botToken) {
@@ -45,42 +47,82 @@ public class DutyBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
-            String message = update.getMessage().getText();
+            message = update.getMessage().getText();
             Long chatId = update.getMessage().getChatId();
 
-            if (message.contains("/setup")) {
-                setupCommand(chatId, message);
-            }
-
-            switch (message) {
-                case "/start" -> startCommand(chatId, update.getMessage().getChat().getUserName());
-                case "/help" -> helpCommand(chatId);
-                case "/duty" -> dutyCommand(chatId);
-                //#TODO
-                default -> unknownCommand(chatId);
+            if (message.matches("/setup\\s[а-яА-Я]+")) {
+                setupCommand(chatId);
+            } else {
+                switch (message) {
+                    case "/start" -> startCommand(chatId, update.getMessage().getChat().getUserName());
+                    case "/help" -> helpCommand(chatId);
+                    case "/duty" -> dutyCommand(chatId);
+                    case "/setup" -> {
+                        sendMessage(chatId, "Вы забыли ввести дежурного!");
+                        helpCommand(chatId);
+                    }
+                    default -> unknownCommand(chatId);
+                }
             }
 
         } else if (update.hasCallbackQuery()) {
             String callbackData = update.getCallbackQuery().getData();
-            Long messageId = Long.valueOf(update.getCallbackQuery().getMessage().getMessageId());
             Long chatId = update.getCallbackQuery().getMessage().getChatId();
 
-            if (callbackData.equals("TEAM1")) {
-                sendMessage(chatId, "team 1");
-            } else if (callbackData.equals("TEAM2")) {
-                sendMessage(chatId, "team 2");
-            } else if (callbackData.equals("TEAM3")) {
-                sendMessage(chatId, "team 3");
+            switch (callbackData) {
+                case "TEAM1duty" -> sendMessage(chatId, getMap().get("TEAM1"));
+                case "TEAM2duty" -> sendMessage(chatId, getMap().get("TEAM2"));
+                case "TEAM3duty" -> sendMessage(chatId, getMap().get("TEAM3"));
+                case "TEAM1set" -> {
+                    getMap().put("TEAM1", message.substring(6));
+                    sendMessage(chatId, "Дежурный успешно добавлен!");
+                }
+                case "TEAM2set" -> {
+                    getMap().put("TEAM2", message.substring(6));
+                    sendMessage(chatId, "Дежурный успешно добавлен!");
+                }
+                case "TEAM3set" -> {
+                    getMap().put("TEAM3", message.substring(6));
+                    sendMessage(chatId, "Дежурный успешно добавлен!");
+                }
             }
         }
     }
 
-    private void setupCommand(Long chatId, String message) {
-        var team = "test"; //#TODO
-        message = message.substring(6);
-        String text = "Дежурный " + message +" успешно добавлен";
-        sendMessage(chatId, text);
-        map.put(team, message);
+    private void setupCommand(Long chatId) {
+        SendMessage text = new SendMessage();
+        text.setChatId(String.valueOf(chatId));
+        text.setText("Выберите команду дежурного");
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+        var button1 = new InlineKeyboardButton();
+        button1.setText("team1");
+        button1.setCallbackData("TEAM1set");
+
+        var button2 = new InlineKeyboardButton();
+        button2.setText("team2");
+        button2.setCallbackData("TEAM2set");
+
+        var button3 = new InlineKeyboardButton();
+        button3.setText("team3");
+        button3.setCallbackData("TEAM3set");
+
+        rowInline.add(button1);
+        rowInline.add(button2);
+        rowInline.add(button3);
+
+        rowsInline.add(rowInline);
+
+        markup.setKeyboard(rowsInline);
+        text.setReplyMarkup(markup);
+        try {
+            execute(text);
+        } catch (TelegramApiException e) {
+            log.error("Ошибка отправки - ", e);
+        }
     }
 
     private void dutyCommand(Long chatId) {
@@ -94,15 +136,15 @@ public class DutyBot extends TelegramLongPollingBot {
 
         var button1 = new InlineKeyboardButton();
         button1.setText("team1");
-        button1.setCallbackData("TEAM1");
+        button1.setCallbackData("TEAM1duty");
 
         var button2 = new InlineKeyboardButton();
         button2.setText("team2");
-        button2.setCallbackData("TEAM2");
+        button2.setCallbackData("TEAM2duty");
 
         var button3 = new InlineKeyboardButton();
         button3.setText("team3");
-        button3.setCallbackData("TEAM3");
+        button3.setCallbackData("TEAM3duty");
 
         rowInline.add(button1);
         rowInline.add(button2);
@@ -115,7 +157,7 @@ public class DutyBot extends TelegramLongPollingBot {
         try {
             execute(message);
         } catch (TelegramApiException e) {
-            LOG.error("Ошибка отправки - ", e);
+            log.error("Ошибка отправки - ", e);
         }
     }
 
@@ -145,6 +187,7 @@ public class DutyBot extends TelegramLongPollingBot {
 
     private void unknownCommand(Long chatId) {
         sendMessage(chatId, "Не понимаю. У меня лапки!");
+        helpCommand(chatId);
     }
 
     private void sendMessage(Long chatId, String text) {
@@ -153,7 +196,7 @@ public class DutyBot extends TelegramLongPollingBot {
         try {
             execute(sendMessage);
         } catch (TelegramApiException e) {
-            LOG.error("Ошибка отправки - ", e);
+            log.error(String.valueOf(e));
         }
     }
 }
