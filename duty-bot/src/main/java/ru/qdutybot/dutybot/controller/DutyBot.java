@@ -18,7 +18,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.regex.Pattern;
 
 @Getter
 @Setter
@@ -29,6 +28,9 @@ public class DutyBot extends TelegramLongPollingBot {
     private LinkedHashMap<String, String> map = new LinkedHashMap<>();
     private String message;
 
+    private final String TEAM1 = "ASTI";
+    private final String TEAM2 = "SPECIAL";
+    private final String TEAM3 = "LOGOS";
 
     public DutyBot(@Value("${bot.token}") String botToken) {
         super(botToken);
@@ -70,26 +72,35 @@ public class DutyBot extends TelegramLongPollingBot {
             Long chatId = update.getCallbackQuery().getMessage().getChatId();
 
             switch (callbackData) {
-                case "TEAM1duty" -> sendMessage(chatId, getMap().get("TEAM1"));
-                case "TEAM2duty" -> sendMessage(chatId, getMap().get("TEAM2"));
-                case "TEAM3duty" -> sendMessage(chatId, getMap().get("TEAM3"));
-                case "TEAM1set" -> {
-                    getMap().put("TEAM1", message.substring(6));
-                    sendMessage(chatId, "Дежурный успешно добавлен!");
-                }
-                case "TEAM2set" -> {
-                    getMap().put("TEAM2", message.substring(6));
-                    sendMessage(chatId, "Дежурный успешно добавлен!");
-                }
-                case "TEAM3set" -> {
-                    getMap().put("TEAM3", message.substring(6));
-                    sendMessage(chatId, "Дежурный успешно добавлен!");
-                }
+                case TEAM1+"GET" -> getFromMap(chatId, TEAM1);
+                case TEAM2+"GET" -> getFromMap(chatId, TEAM2);
+                case TEAM3+"GET" -> getFromMap(chatId, TEAM3);
+                case TEAM1+"SET" -> putMap(TEAM1, message, chatId);
+                case TEAM2+"SET" -> putMap(TEAM2, message, chatId);
+                case TEAM3+"SET" -> putMap(TEAM3, message, chatId);
             }
         }
     }
 
     private void setupCommand(Long chatId) {
+        keyboardMarkup(chatId, "SET");
+    }
+
+    private void dutyCommand(Long chatId) {
+        keyboardMarkup(chatId, "GET");
+    }
+
+    private void getFromMap(Long chatId, String team) {
+        String text = getMap().getOrDefault(team, "не назначен!");
+        sendMessage(chatId, "Текущий дежурный - " + text);
+    }
+
+    private void putMap(String team, String message, Long chatId) {
+        getMap().put(team, message.substring(6));
+        sendMessage(chatId, "Дежурный успешно добавлен!");
+        //#TODO оповещение в чате
+    }
+    private void keyboardMarkup(Long chatId, String command) {
         SendMessage text = new SendMessage();
         text.setChatId(String.valueOf(chatId));
         text.setText("Выберите команду дежурного");
@@ -99,16 +110,16 @@ public class DutyBot extends TelegramLongPollingBot {
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
 
         var button1 = new InlineKeyboardButton();
-        button1.setText("team1");
-        button1.setCallbackData("TEAM1set");
+        button1.setText(TEAM1);
+        button1.setCallbackData(TEAM1+command);
 
         var button2 = new InlineKeyboardButton();
-        button2.setText("team2");
-        button2.setCallbackData("TEAM2set");
+        button2.setText(TEAM2);
+        button2.setCallbackData(TEAM2+command);
 
         var button3 = new InlineKeyboardButton();
-        button3.setText("team3");
-        button3.setCallbackData("TEAM3set");
+        button3.setText(TEAM3);
+        button3.setCallbackData(TEAM3+command);
 
         rowInline.add(button1);
         rowInline.add(button2);
@@ -120,42 +131,6 @@ public class DutyBot extends TelegramLongPollingBot {
         text.setReplyMarkup(markup);
         try {
             execute(text);
-        } catch (TelegramApiException e) {
-            log.error("Ошибка отправки - ", e);
-        }
-    }
-
-    private void dutyCommand(Long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(String.valueOf(chatId));
-        message.setText("Уточнение команды дежурного");
-
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-
-        var button1 = new InlineKeyboardButton();
-        button1.setText("team1");
-        button1.setCallbackData("TEAM1duty");
-
-        var button2 = new InlineKeyboardButton();
-        button2.setText("team2");
-        button2.setCallbackData("TEAM2duty");
-
-        var button3 = new InlineKeyboardButton();
-        button3.setText("team3");
-        button3.setCallbackData("TEAM3duty");
-
-        rowInline.add(button1);
-        rowInline.add(button2);
-        rowInline.add(button3);
-
-        rowsInline.add(rowInline);
-
-        markup.setKeyboard(rowsInline);
-        message.setReplyMarkup(markup);
-        try {
-            execute(message);
         } catch (TelegramApiException e) {
             log.error("Ошибка отправки - ", e);
         }
