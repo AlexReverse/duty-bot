@@ -3,9 +3,7 @@ package ru.qdutybot.dutybot.controller;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
@@ -15,12 +13,10 @@ import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.qdutybot.dutybot.Team;
 import ru.qdutybot.dutybot.service.HelpCommand;
+import ru.qdutybot.dutybot.service.InlineKeyboard;
 import ru.qdutybot.dutybot.service.KeyboardMarkup;
 
 import java.util.ArrayList;
@@ -97,36 +93,9 @@ public class DutyBot extends TelegramLongPollingBot {
         SendMessage text = new SendMessage();
         text.setChatId(String.valueOf(chatId));
         text.setText("Укажите команду для дежурного");
-
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-
-        var button1 = new InlineKeyboardButton();
-        button1.setText(TEAM1);
-        button1.setCallbackData(TEAM1);
-
-        var button2 = new InlineKeyboardButton();
-        button2.setText(TEAM2);
-        button2.setCallbackData(TEAM2);
-
-        var button3 = new InlineKeyboardButton();
-        button3.setText(TEAM3);
-        button3.setCallbackData(TEAM3);
-
-        rowInline.add(button1);
-        rowInline.add(button2);
-        rowInline.add(button3);
-
-        rowsInline.add(rowInline);
-
-        markup.setKeyboard(rowsInline);
+        InlineKeyboardMarkup markup = new InlineKeyboard().getInlineKeyboardMarkup();
         text.setReplyMarkup(markup);
-        try {
-            execute(text);
-        } catch (TelegramApiException e) {
-            log.error("Ошибка отправки - ", e);
-        }
+        tryExecute(text);
     }
 
     private void dutyCommand(Long chatId) {
@@ -135,6 +104,10 @@ public class DutyBot extends TelegramLongPollingBot {
         text.setText("Выберите команду дежурного");
         ReplyKeyboardMarkup reply = new KeyboardMarkup().getReplyKeyboardMarkup();
         text.setReplyMarkup(reply);
+        tryExecute(text);
+    }
+
+    private void tryExecute(SendMessage text) {
         try {
             execute(text);
         } catch (TelegramApiException e) {
