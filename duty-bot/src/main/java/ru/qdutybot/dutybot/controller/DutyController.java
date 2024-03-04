@@ -27,7 +27,7 @@ import java.util.List;
 @Setter
 @Slf4j
 @Component
-public class DutyBot extends TelegramLongPollingBot {
+public class DutyController extends TelegramLongPollingBot {
 
     private LinkedHashMap<String, String> map = new LinkedHashMap<>();
     private String message;
@@ -39,7 +39,7 @@ public class DutyBot extends TelegramLongPollingBot {
 
     private HelpCommand helpCommand = new HelpCommand();
 
-    public DutyBot(@Value("${bot.token}") String botToken) {
+    public DutyController(@Value("${bot.token}") String botToken) {
         super(botToken);
         List<BotCommand> commandList = new ArrayList<>();
         commandList.add(new BotCommand("/start", "стартовое сообщение"));
