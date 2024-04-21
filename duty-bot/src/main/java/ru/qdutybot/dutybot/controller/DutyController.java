@@ -3,6 +3,7 @@ package ru.qdutybot.dutybot.controller;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -15,6 +16,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.qdutybot.dutybot.Team;
+import ru.qdutybot.dutybot.data.ExcelRepository;
 import ru.qdutybot.dutybot.service.HelpCommand;
 import ru.qdutybot.dutybot.service.InlineKeyboard;
 import ru.qdutybot.dutybot.service.KeyboardMarkup;
@@ -32,6 +34,9 @@ public class DutyController extends TelegramLongPollingBot {
     private LinkedHashMap<String, String> map = new LinkedHashMap<>();
     private String message;
 
+    @Autowired
+    private ExcelRepository excelRepository;
+
     private final String TEAM1 = Team.TEAM1.getString();
     private final String TEAM2 = Team.TEAM2.getString();
     private final String TEAM3 = Team.TEAM3.getString();
@@ -39,8 +44,11 @@ public class DutyController extends TelegramLongPollingBot {
 
     private HelpCommand helpCommand = new HelpCommand();
 
-    public DutyController(@Value("${bot.token}") String botToken) {
+    public DutyController(@Value("${bot.token}") String botToken, ExcelRepository excelRepository) {
         super(botToken);
+        this.excelRepository=excelRepository;
+
+
         List<BotCommand> commandList = new ArrayList<>();
         commandList.add(new BotCommand("/start", "стартовое сообщение"));
         commandList.add(new BotCommand("/help", "просмотр информации"));
@@ -141,7 +149,7 @@ public class DutyController extends TelegramLongPollingBot {
     }
 
     private void unknownCommand(Long chatId) {
-        sendMessage(chatId, "Не понимаю. У меня лапки!\nДля подскажки /help");
+        sendMessage(chatId, "Не понимаю. У меня лапки!\nДля подсказки /help");
     }
 
     private void sendMessage(Long chatId, String text) {

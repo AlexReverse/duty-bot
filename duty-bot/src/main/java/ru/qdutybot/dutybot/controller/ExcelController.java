@@ -16,8 +16,8 @@ import ru.qdutybot.dutybot.data.Excel;
 import ru.qdutybot.dutybot.data.ExcelRepository;
 
 import java.io.FileInputStream;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.time.Instant;
+import java.util.*;
 
 @Component
 @Slf4j
@@ -37,19 +37,27 @@ public class ExcelController {
             Workbook workbook = new XSSFWorkbook(fileInputStream);
             Sheet sheet = workbook.getSheetAt(0);
 
-            Map<String, String> data = new LinkedHashMap<>();
+            Map<String, ArrayList<String>> data = new LinkedHashMap<>();
             int i = 0;
             for (Row row : sheet) {
                 if (sheet.getRow(i).getCell(0) != null) {
                     for (Cell cell : row) {
-                        String string = sheet.getRow(i).getCell(1).toString() + ": " + sheet.getRow(i).getCell(2).toString();
+                        ArrayList<String> string = new ArrayList<>();
+                        string.add(sheet.getRow(i).getCell(1).toString());
+                        string.add(sheet.getRow(i).getCell(2).toString());
                         data.put(sheet.getRow(i).getCell(0).toString(), string);
                     }
                 }
                 i++;
             }
-            for (Map.Entry<String, String> entry : data.entrySet()) {
-                System.out.println(entry.getKey() + " - " + entry.getValue());
+            for (Map.Entry<String, ArrayList<String>> entry : data.entrySet()) {
+                Excel excel = new Excel();
+                excel.setDate(Date.from(Instant.parse(entry.getKey())));
+                ArrayList<String> strings = new ArrayList<>();
+                strings.addAll(entry.getValue());
+                excel.setName(strings.get(0));
+                excel.setTg(strings.get(1));
+                excelRepository.save(excel);
             }
 
         } catch (Exception e) {
