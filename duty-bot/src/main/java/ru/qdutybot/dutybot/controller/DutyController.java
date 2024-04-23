@@ -67,7 +67,7 @@ public class DutyController extends TelegramLongPollingBot {
             message = update.getMessage().getText();
             Long chatId = update.getMessage().getChatId();
 
-            if (message.matches("/setup\\s[а-яА-Я]+")) {
+            if (message.matches("/setup\\s[а-яА-Я]+\\s[а-яА-Я]+")) {
                 setupCommand(chatId);
             } else {
                 switch (message) {

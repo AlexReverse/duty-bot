@@ -8,10 +8,10 @@ import lombok.Setter;
 import java.util.Date;
 
 @Data
-@Entity(name = "excelData")
+@Entity
 @Getter
 @Setter
-public class Excel {
+public class ExcelData {
 
     private static final long serialVersionUID = 1L;
 
