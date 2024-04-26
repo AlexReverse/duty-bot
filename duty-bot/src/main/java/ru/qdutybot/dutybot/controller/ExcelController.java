@@ -24,6 +24,7 @@ import java.util.*;
 public class ExcelController {
     private ExcelRepository excelRepository;
     private Map<Date, ArrayList<String>> data = new LinkedHashMap<>();
+    private Integer team;
 
     @Autowired
     public ExcelController(ExcelRepository excelRepository) {
@@ -35,28 +36,37 @@ public class ExcelController {
         try {
             FileInputStream fileInputStream = new FileInputStream(Path.get("C:\\Users\\mrevt\\IdeaProjects\\duty-bot\\duty-bot\\дежурные.xlsx").toFile());
             Workbook workbook = new XSSFWorkbook(fileInputStream);
-            Sheet sheet = workbook.getSheetAt(0);
 
-            int i = 1;
-            for (Row row : sheet) {
-                for (Cell cell : row) {
-                    ArrayList<String> string = new ArrayList<>();
-                    string.add(sheet.getRow(i).getCell(1).toString());
-                    string.add(sheet.getRow(i).getCell(2).toString());
-                    data.put(sheet.getRow(i).getCell(0).getDateCellValue(), string);
+            for (team = 0; team < 3; team++) {
+                Sheet sheet = workbook.getSheetAt(team);
+                int i = 1;
+                for (Row row : sheet) {
+                    for (Cell cell : row) {
+                        ArrayList<String> string = new ArrayList<>();
+                        string.add(sheet.getRow(i).getCell(1).toString());
+                        string.add(sheet.getRow(i).getCell(2).toString());
+                        data.put(sheet.getRow(i).getCell(0).getDateCellValue(), string);
+                    }
+                    i++;
                 }
-                i++;
             }
 
         } catch (NullPointerException e) {
             for (Map.Entry<Date, ArrayList<String>> entry : data.entrySet()) {
                 ExcelData excelData = new ExcelData();
-                excelData.setDate(entry.getKey());
-                System.out.println(entry.getKey());
                 ArrayList<String> strings = new ArrayList<>();
                 strings.addAll(entry.getValue());
+
+                excelData.setDate(entry.getKey());
                 excelData.setName(strings.get(0));
                 excelData.setTg(strings.get(1));
+
+                switch (team) {
+                    case 0 -> excelData.setTeam("Asti");
+                    case 1 -> excelData.setTeam("SPECIAL");
+                    case 2 -> excelData.setTeam("LOGOS");
+                }
+
                 excelRepository.save(excelData);
             }
             log.info("---info saved from excel---");

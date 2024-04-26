@@ -16,12 +16,15 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.qdutybot.dutybot.Team;
+import ru.qdutybot.dutybot.data.ExcelData;
 import ru.qdutybot.dutybot.data.ExcelRepository;
 import ru.qdutybot.dutybot.service.HelpCommand;
 import ru.qdutybot.dutybot.service.InlineKeyboard;
 import ru.qdutybot.dutybot.service.KeyboardMarkup;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -130,6 +133,14 @@ public class DutyController extends TelegramLongPollingBot {
 
     private void putMap(String team, String message, Long chatId) {
         getMap().put(team, message.substring(6));
+        ExcelData excelData = new ExcelData();
+        Date current = new Date();
+
+        excelData.setName(message.substring(6));
+        excelData.setDate(current);
+        excelData.setTg(excelRepository.findByName(message.substring(6)).getTg());
+        excelData.setTeam(team);
+
         sendMessage(chatId, "Дежурный " + getMap().get(team) + ", в команду " + team + " успешно добавлен!");
         //#TODO оповещение в чате
     }

@@ -23,6 +23,7 @@ public class ExcelData {
     private Date date;
     private String name;
     private String tg;
+    private String team;
 
     @PrePersist
     void placedAt(){
