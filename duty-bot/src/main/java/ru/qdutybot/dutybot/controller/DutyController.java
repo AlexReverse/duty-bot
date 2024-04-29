@@ -127,12 +127,13 @@ public class DutyController extends TelegramLongPollingBot {
     }
 
     private void getFromMap(Long chatId, String team) {
-        String text = getMap().getOrDefault(team, "не назначен!");
+        Date mon = new Date();
+        String text = excelRepository.findByTeam(team).getName();
+        
         sendMessage(chatId, "Текущий дежурный в команде " + team + " - " + text);
     }
 
     private void putMap(String team, String message, Long chatId) {
-        getMap().put(team, message.substring(6));
         ExcelData excelData = new ExcelData();
         Date current = new Date();
 

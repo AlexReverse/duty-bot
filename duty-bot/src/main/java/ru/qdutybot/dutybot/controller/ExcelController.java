@@ -33,11 +33,10 @@ public class ExcelController {
 
     @Bean
     private void excelParsing() {
-        try {
-            FileInputStream fileInputStream = new FileInputStream(Path.get("C:\\Users\\mrevt\\IdeaProjects\\duty-bot\\duty-bot\\дежурные.xlsx").toFile());
-            Workbook workbook = new XSSFWorkbook(fileInputStream);
+        for (int team = 0; team < 3; team++) {
+            try (FileInputStream fileInputStream = new FileInputStream(Path.get("C:\\Users\\mrevt\\IdeaProjects\\duty-bot\\duty-bot\\дежурные.xlsx").toFile());) {
+                Workbook workbook = new XSSFWorkbook(fileInputStream);
 
-            for (team = 0; team < 3; team++) {
                 Sheet sheet = workbook.getSheetAt(team);
                 int i = 1;
                 for (Row row : sheet) {
@@ -49,29 +48,29 @@ public class ExcelController {
                     }
                     i++;
                 }
-            }
 
-        } catch (NullPointerException e) {
-            for (Map.Entry<Date, ArrayList<String>> entry : data.entrySet()) {
-                ExcelData excelData = new ExcelData();
-                ArrayList<String> strings = new ArrayList<>();
-                strings.addAll(entry.getValue());
+            } catch (NullPointerException e) {
+                for (Map.Entry<Date, ArrayList<String>> entry : data.entrySet()) {
+                    ExcelData excelData = new ExcelData();
+                    ArrayList<String> strings = new ArrayList<>();
+                    strings.addAll(entry.getValue());
 
-                excelData.setDate(entry.getKey());
-                excelData.setName(strings.get(0));
-                excelData.setTg(strings.get(1));
+                    excelData.setDate(entry.getKey());
+                    excelData.setName(strings.get(0));
+                    excelData.setTg(strings.get(1));
 
-                switch (team) {
-                    case 0 -> excelData.setTeam("Asti");
-                    case 1 -> excelData.setTeam("SPECIAL");
-                    case 2 -> excelData.setTeam("LOGOS");
+                    switch (team) {
+                        case 0 -> excelData.setTeam("Asti");
+                        case 1 -> excelData.setTeam("SPECIAL");
+                        case 2 -> excelData.setTeam("LOGOS");
+                    }
+
+                    excelRepository.save(excelData);
                 }
-
-                excelRepository.save(excelData);
+                log.info("---info saved from excel---");
+            } catch (Exception e) {
+                log.error(e.getMessage());
             }
-            log.info("---info saved from excel---");
-        } catch (Exception e) {
-            log.error(e.getMessage());
         }
     }
 }
