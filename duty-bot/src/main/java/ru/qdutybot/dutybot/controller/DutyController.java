@@ -22,11 +22,10 @@ import ru.qdutybot.dutybot.service.HelpCommand;
 import ru.qdutybot.dutybot.service.InlineKeyboard;
 import ru.qdutybot.dutybot.service.KeyboardMarkup;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Getter
 @Setter
@@ -127,15 +126,16 @@ public class DutyController extends TelegramLongPollingBot {
     }
 
     private void getFromMap(Long chatId, String team) {
-        Date mon = new Date();
-        String text = excelRepository.findByTeam(team).getName();
+        String date = getMonday();
+
+        //String text = excelRepository.findByTeamAndDate(team, date).getName();#TODO
         
-        sendMessage(chatId, "Текущий дежурный в команде " + team + " - " + text);
+        sendMessage(chatId, "Текущий дежурный в команде " + team + " - " + date);
     }
 
     private void putMap(String team, String message, Long chatId) {
         ExcelData excelData = new ExcelData();
-        Date current = new Date();
+        String current = getMonday();
 
         excelData.setName(message.substring(6));
         excelData.setDate(current);
@@ -158,6 +158,16 @@ public class DutyController extends TelegramLongPollingBot {
                 """;
         var formattedText = String.format(text, userName);
         sendMessage(chatId, formattedText);
+    }
+
+    private String getMonday() {
+        Calendar cal = Calendar.getInstance(TimeZone.getDefault());
+        LocalDate localDate = LocalDate.now();
+        while (!localDate.getDayOfWeek().equals(DayOfWeek.MONDAY)) {
+            localDate = localDate.minusDays(1);
+        }
+
+        return localDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
     }
 
     private void unknownCommand(Long chatId) {

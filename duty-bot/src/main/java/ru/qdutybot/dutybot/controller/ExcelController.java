@@ -23,7 +23,7 @@ import java.util.*;
 @Controller
 public class ExcelController {
     private ExcelRepository excelRepository;
-    private Map<Date, ArrayList<String>> data = new LinkedHashMap<>();
+    private Map<String, ArrayList<String>> data = new LinkedHashMap<>();
     private Integer team;
 
     @Autowired
@@ -34,7 +34,7 @@ public class ExcelController {
     @Bean
     private void excelParsing() {
         for (int team = 0; team < 3; team++) {
-            try (FileInputStream fileInputStream = new FileInputStream(Path.get("C:\\Users\\mrevt\\IdeaProjects\\duty-bot\\duty-bot\\дежурные.xlsx").toFile());) {
+            try (FileInputStream fileInputStream = new FileInputStream(Path.get("C:\\Users\\mrevt\\IdeaProjects\\duty-bot\\duty-bot\\дежурные.xlsx").toFile())) {
                 Workbook workbook = new XSSFWorkbook(fileInputStream);
 
                 Sheet sheet = workbook.getSheetAt(team);
@@ -44,13 +44,13 @@ public class ExcelController {
                         ArrayList<String> string = new ArrayList<>();
                         string.add(sheet.getRow(i).getCell(1).toString());
                         string.add(sheet.getRow(i).getCell(2).toString());
-                        data.put(sheet.getRow(i).getCell(0).getDateCellValue(), string);
+                        data.put(String.valueOf(sheet.getRow(i).getCell(0).getDateCellValue()), string);
                     }
                     i++;
                 }
 
             } catch (NullPointerException e) {
-                for (Map.Entry<Date, ArrayList<String>> entry : data.entrySet()) {
+                for (Map.Entry<String, ArrayList<String>> entry : data.entrySet()) {
                     ExcelData excelData = new ExcelData();
                     ArrayList<String> strings = new ArrayList<>();
                     strings.addAll(entry.getValue());

@@ -20,7 +20,7 @@ public class ExcelData {
     private Long id;
 
     private Date placedAt;
-    private Date date;
+    private String date;
     private String name;
     private String tg;
     private String team;
