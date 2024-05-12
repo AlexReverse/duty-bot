@@ -44,7 +44,7 @@ public class ExcelController {
                         ArrayList<String> string = new ArrayList<>();
                         string.add(sheet.getRow(i).getCell(1).toString());
                         string.add(sheet.getRow(i).getCell(2).toString());
-                        data.put(String.valueOf(sheet.getRow(i).getCell(0).getDateCellValue()), string);
+                        data.put(String.valueOf((sheet.getRow(i).getCell(0)).getLocalDateTimeCellValue()), string);
                     }
                     i++;
                 }

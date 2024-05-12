@@ -5,6 +5,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
@@ -22,6 +23,10 @@ import ru.qdutybot.dutybot.service.HelpCommand;
 import ru.qdutybot.dutybot.service.InlineKeyboard;
 import ru.qdutybot.dutybot.service.KeyboardMarkup;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -33,7 +38,6 @@ import java.util.*;
 @Component
 public class DutyController extends TelegramLongPollingBot {
 
-    private LinkedHashMap<String, String> map = new LinkedHashMap<>();
     private String message;
 
     @Autowired
@@ -127,22 +131,24 @@ public class DutyController extends TelegramLongPollingBot {
 
     private void getFromMap(Long chatId, String team) {
         String date = getMonday();
-
-        //String text = excelRepository.findByTeamAndDate(team, date).getName();#TODO
-        
-        sendMessage(chatId, "Текущий дежурный в команде " + team + " - " + date);
+        String text = excelRepository.findDuty(team, date+"T00:00").getLast();
+        sendMessage(chatId, "Текущий дежурный в команде " + team + " - " + text);
     }
 
     private void putMap(String team, String message, Long chatId) {
         ExcelData excelData = new ExcelData();
         String current = getMonday();
 
-        excelData.setName(message.substring(6));
-        excelData.setDate(current);
-        excelData.setTg(excelRepository.findByName(message.substring(6)).getTg());
-        excelData.setTeam(team);
-
-        sendMessage(chatId, "Дежурный " + getMap().get(team) + ", в команду " + team + " успешно добавлен!");
+        try {
+            excelData.setTg(excelRepository.findByName(message.substring(7)).getLast());
+            excelData.setName(message.substring(7));
+            excelData.setDate(current);
+            excelData.setTeam(team);
+            sendMessage(chatId, "Дежурный " + message.substring(7) + ", в команду " + team + " успешно добавлен!");
+            //#TODO
+        } catch (Exception e) {
+            sendMessage(chatId, "Запись не сохранена!\nДанный сотрудник не найден.");
+        }
         //#TODO оповещение в чате
     }
 
@@ -167,7 +173,7 @@ public class DutyController extends TelegramLongPollingBot {
             localDate = localDate.minusDays(1);
         }
 
-        return localDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+        return localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
     }
 
     private void unknownCommand(Long chatId) {
