@@ -11,6 +11,6 @@ public interface ExcelRepository extends CrudRepository<ExcelData, Long> {
     @Query(nativeQuery = true, value = "select distinct tg from excel_data where name=:name")
     public List<String> findByName(@Param("name") String name);
 
-    @Query(nativeQuery = true, value = "select name, tg from excel_data where team in(:team) and date in(:date)")
+    @Query(nativeQuery = true, value = "select concat(name, ', телеграм - ' , tg) from excel_data where team in(:team) and date in(:date)")
     public List<String> findDuty(@Param("team") String team, @Param("date") String date);
 }

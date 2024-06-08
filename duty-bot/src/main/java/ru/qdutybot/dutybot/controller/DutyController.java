@@ -23,10 +23,6 @@ import ru.qdutybot.dutybot.service.HelpCommand;
 import ru.qdutybot.dutybot.service.InlineKeyboard;
 import ru.qdutybot.dutybot.service.KeyboardMarkup;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -115,7 +111,7 @@ public class DutyController extends TelegramLongPollingBot {
     private void dutyCommand(Long chatId) {
         SendMessage text = new SendMessage();
         text.setChatId(String.valueOf(chatId));
-        text.setText("Выберите команду дежурного");
+        text.setText("Выберите команду дежурного ниже из списка");
         ReplyKeyboardMarkup reply = new KeyboardMarkup().getReplyKeyboardMarkup();
         text.setReplyMarkup(reply);
         tryExecute(text);
@@ -132,7 +128,7 @@ public class DutyController extends TelegramLongPollingBot {
     private void getFromMap(Long chatId, String team) {
         String date = getMonday();
         String text = excelRepository.findDuty(team, date+"T00:00").getLast();
-        sendMessage(chatId, "Текущий дежурный в команде " + team + " - " + text);
+        sendMessage(chatId, "Текущий дежурный в команде " + team + " - " + Arrays.toString(text.split(",")));
     }
 
     private void putMap(String team, String message, Long chatId) {
@@ -147,7 +143,7 @@ public class DutyController extends TelegramLongPollingBot {
             sendMessage(chatId, "Дежурный " + message.substring(7) + ", в команду " + team + " успешно добавлен!");
             //#TODO
         } catch (Exception e) {
-            sendMessage(chatId, "Запись не сохранена!\nДанный сотрудник не найден.");
+            sendMessage(chatId, "Запись не сохранена!\nДанный сотрудник не найден в файле.");
         }
         //#TODO оповещение в чате
     }
