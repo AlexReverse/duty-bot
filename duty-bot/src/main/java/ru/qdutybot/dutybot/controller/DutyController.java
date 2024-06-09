@@ -128,7 +128,7 @@ public class DutyController extends TelegramLongPollingBot {
     private void getFromMap(Long chatId, String team) {
         String date = getMonday();
         String text = excelRepository.findDuty(team, date+"T00:00").getLast();
-        sendMessage(chatId, "Текущий дежурный в команде " + team + " - " + Arrays.toString(text.split(",")));
+        sendMessage(chatId, "Текущий дежурный в команде " + team + " - " + text);
     }
 
     private void putMap(String team, String message, Long chatId) {
@@ -138,10 +138,11 @@ public class DutyController extends TelegramLongPollingBot {
         try {
             excelData.setTg(excelRepository.findByName(message.substring(7)).getLast());
             excelData.setName(message.substring(7));
-            excelData.setDate(current);
+            excelData.setDate(current+"T00:00");
             excelData.setTeam(team);
+            excelRepository.save(excelData);
             sendMessage(chatId, "Дежурный " + message.substring(7) + ", в команду " + team + " успешно добавлен!");
-            //#TODO
+
         } catch (Exception e) {
             sendMessage(chatId, "Запись не сохранена!\nДанный сотрудник не найден в файле.");
         }
