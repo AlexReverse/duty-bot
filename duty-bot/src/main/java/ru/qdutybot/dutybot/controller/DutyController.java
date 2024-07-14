@@ -17,15 +17,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.qdutybot.dutybot.Team;
-import ru.qdutybot.dutybot.data.ExcelData;
 import ru.qdutybot.dutybot.data.ExcelRepository;
-import ru.qdutybot.dutybot.service.HelpCommand;
-import ru.qdutybot.dutybot.service.InlineKeyboard;
-import ru.qdutybot.dutybot.service.KeyboardMarkup;
+import ru.qdutybot.dutybot.service.*;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Getter
@@ -73,7 +67,7 @@ public class DutyController extends TelegramLongPollingBot {
                 setupCommand(chatId);
             } else {
                 switch (message) {
-                    case "/start" -> startCommand(chatId, update.getMessage().getChat().getUserName());
+                    case "/start" -> sendMessage(chatId, new StartCommand().startCommand(update.getMessage().getChat().getUserName()));
                     case "/help" -> sendMessage(chatId, new HelpCommand().getTextHelpCommand());
                     case "/duty" -> dutyCommand(chatId);
                     case "/setup" -> {
@@ -83,7 +77,7 @@ public class DutyController extends TelegramLongPollingBot {
                     case "Asti" -> getFromMap(chatId, TEAM1);
                     case "SPECIAL" -> getFromMap(chatId, TEAM2);
                     case "LOGOS" -> getFromMap(chatId, TEAM3);
-                    default -> unknownCommand(chatId);
+                    default -> sendMessage(chatId, new UnknownCommand().getTextUnknownCommand());
                 }
             }
 
@@ -92,9 +86,9 @@ public class DutyController extends TelegramLongPollingBot {
             Long chatId = update.getCallbackQuery().getMessage().getChatId();
 
             switch (callbackData) {
-                case "Asti" -> putMap(TEAM1, message, chatId);
-                case "SPECIAL" -> putMap(TEAM2, message, chatId);
-                case "LOGOS" -> putMap(TEAM3, message, chatId);
+                case "Asti" -> sendMessage(chatId, new PutMap(excelRepository).putMap(TEAM1, message));
+                case "SPECIAL" -> sendMessage(chatId, new PutMap(excelRepository).putMap(TEAM2, message));
+                case "LOGOS" -> sendMessage(chatId, new PutMap(excelRepository).putMap(TEAM3, message));
             }
         }
     }
@@ -126,55 +120,14 @@ public class DutyController extends TelegramLongPollingBot {
     }
 
     private void getFromMap(Long chatId, String team) {
-        String date = getMonday();
+        String date = new Monday().getMonday();
         String text = excelRepository.findDuty(team, date+"T00:00").getLast();
         sendMessage(chatId, "Текущий дежурный в команде " + team + " - " + text);
-    }
-
-    private void putMap(String team, String message, Long chatId) {
-        ExcelData excelData = new ExcelData();
-        String current = getMonday();
-
-        try {
-            excelData.setTg(excelRepository.findByName(message.substring(7)).getLast());
-            excelData.setName(message.substring(7));
-            excelData.setDate(current+"T00:00");
-            excelData.setTeam(team);
-            excelRepository.save(excelData);
-            sendMessage(chatId, "Дежурный " + message.substring(7) + ", в команду " + team + " успешно добавлен!");
-
-        } catch (Exception e) {
-            sendMessage(chatId, "Запись не сохранена!\nДанный сотрудник не найден в файле.");
-        }
-        //#TODO оповещение в чате
     }
 
     @Override
     public String getBotUsername() {
         return "${bot.name}";
-    }
-
-    private void startCommand(Long chatId, String userName) {
-        var text = """
-                Добро пожаловать, %s!
-                /help - для получения справки
-                """;
-        var formattedText = String.format(text, userName);
-        sendMessage(chatId, formattedText);
-    }
-
-    private String getMonday() {
-        Calendar cal = Calendar.getInstance(TimeZone.getDefault());
-        LocalDate localDate = LocalDate.now();
-        while (!localDate.getDayOfWeek().equals(DayOfWeek.MONDAY)) {
-            localDate = localDate.minusDays(1);
-        }
-
-        return localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-    }
-
-    private void unknownCommand(Long chatId) {
-        sendMessage(chatId, "Не понимаю. У меня лапки!\nДля подсказки /help");
     }
 
     private void sendMessage(Long chatId, String text) {
