@@ -13,8 +13,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.qdutybot.dutybot.Team;
 import ru.qdutybot.dutybot.data.ExcelRepository;
@@ -64,12 +62,12 @@ public class DutyController extends TelegramLongPollingBot {
             Long chatId = update.getMessage().getChatId();
 
             if (message.matches("/setup\\s[а-яА-Я]+\\s[а-яА-Я]+")) {
-                setupCommand(chatId);
+                tryExecute(new SetupCommand().setupCommand(chatId));
             } else {
                 switch (message) {
                     case "/start" -> sendMessage(chatId, new StartCommand().startCommand(update.getMessage().getChat().getUserName()));
                     case "/help" -> sendMessage(chatId, new HelpCommand().getTextHelpCommand());
-                    case "/duty" -> dutyCommand(chatId);
+                    case "/duty" -> tryExecute(new DutyCommand().dutyCommand(chatId));
                     case "/setup" -> {
                         sendMessage(chatId, "Вы забыли ввести дежурного!");
                         sendMessage(chatId, new HelpCommand().getTextHelpCommand());
@@ -91,24 +89,6 @@ public class DutyController extends TelegramLongPollingBot {
                 case "LOGOS" -> sendMessage(chatId, new PutMap(excelRepository).putMap(TEAM3, message));
             }
         }
-    }
-
-    private void setupCommand(Long chatId) {
-        SendMessage text = new SendMessage();
-        text.setChatId(String.valueOf(chatId));
-        text.setText("Укажите команду для дежурного");
-        InlineKeyboardMarkup markup = new InlineKeyboard().getInlineKeyboardMarkup();
-        text.setReplyMarkup(markup);
-        tryExecute(text);
-    }
-
-    private void dutyCommand(Long chatId) {
-        SendMessage text = new SendMessage();
-        text.setChatId(String.valueOf(chatId));
-        text.setText("Выберите команду дежурного ниже из списка");
-        ReplyKeyboardMarkup reply = new KeyboardMarkup().getReplyKeyboardMarkup();
-        text.setReplyMarkup(reply);
-        tryExecute(text);
     }
 
     private void tryExecute(SendMessage text) {
