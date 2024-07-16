@@ -1,10 +1,10 @@
-bot.token: '6616805676:AAEBoozu8HweVKMfsXj_WfzB3gZBVWcyZVE'
+bot.token: 'XXXXXXXXXXXXXXXXX'
 bot.name: 'QDuty_bot'
 
 spring.jpa.hibernate.ddl-auto: update
 spring.datasource.url: jdbc:postgresql://localhost:5432/intercore
 spring.datasource.username: postgres
-spring.datasource.password: "@ncHocl&ffkfp)h"
+spring.datasource.password: "XXXXXXXXXXXXXX"
 spring.datasource.driver-class-name: org.postgresql.Driver
 spring.jpa.database-platform: org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.generate-ddl: true
