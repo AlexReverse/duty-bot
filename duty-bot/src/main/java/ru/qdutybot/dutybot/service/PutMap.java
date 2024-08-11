@@ -24,6 +24,5 @@ public class PutMap {
         } catch (Exception e) {
             return  "Запись не сохранена!\nДанный сотрудник не найден в файле.";
         }
-        //#TODO оповещение в чате
     }
 }

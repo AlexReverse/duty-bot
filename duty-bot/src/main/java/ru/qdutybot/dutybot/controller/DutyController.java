@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
@@ -24,6 +26,7 @@ import java.util.*;
 @Setter
 @Slf4j
 @Component
+@EnableScheduling
 public class DutyController extends TelegramLongPollingBot {
 
     private String message;
@@ -41,13 +44,13 @@ public class DutyController extends TelegramLongPollingBot {
     public DutyController(@Value("${bot.token}") String botToken, ExcelRepository excelRepository) {
         super(botToken);
         this.excelRepository=excelRepository;
-
-
         List<BotCommand> commandList = new ArrayList<>();
+
         commandList.add(new BotCommand("/start", "стартовое сообщение"));
         commandList.add(new BotCommand("/help", "просмотр информации"));
         commandList.add(new BotCommand("/duty", "уточнение дежурного"));
         commandList.add(new BotCommand("/setup", "назначить дежурного"));
+
         try {
             this.execute(new SetMyCommands(commandList, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {
@@ -84,9 +87,18 @@ public class DutyController extends TelegramLongPollingBot {
             Long chatId = update.getCallbackQuery().getMessage().getChatId();
 
             switch (callbackData) {
-                case "Asti" -> sendMessage(chatId, new PutMap(excelRepository).putMap(TEAM1, message));
-                case "SPECIAL" -> sendMessage(chatId, new PutMap(excelRepository).putMap(TEAM2, message));
-                case "LOGOS" -> sendMessage(chatId, new PutMap(excelRepository).putMap(TEAM3, message));
+                case "Asti" -> {
+                    sendMessage(chatId, new PutMap(excelRepository).putMap(TEAM1, message));
+                    sendMessage(Team.TEAM1.getL(), "Дежурный был изменен на " + message.substring(7));
+                }
+                case "SPECIAL" -> {
+                    sendMessage(chatId, new PutMap(excelRepository).putMap(TEAM2, message));
+                    sendMessage(Team.TEAM2.getL(), "Дежурный был изменен на " + message.substring(7));
+                }
+                case "LOGOS" -> {
+                    sendMessage(chatId, new PutMap(excelRepository).putMap(TEAM3, message));
+                    sendMessage(Team.TEAM3.getL(), "Дежурный был изменен на " + message.substring(7));
+                }
             }
         }
     }
@@ -105,6 +117,22 @@ public class DutyController extends TelegramLongPollingBot {
         sendMessage(chatId, "Текущий дежурный в команде " + team + " - " + text);
     }
 
+    /*
+    Cron - настраиваемое оповещение в чатах
+     */
+    @Scheduled(cron = "* * 9 * * MON")
+    private void sendInfo(){
+        String date = new Monday().getMonday();
+
+        String text = excelRepository.findDuty(String.valueOf(TEAM1), date+"T00:00").getLast();
+        sendMessage(Team.TEAM1.getL(), "Дежурный на эту неделю в команду " + TEAM1 + " - " + text);
+
+        text = excelRepository.findDuty(String.valueOf(TEAM2), date+"T00:00").getLast();
+        sendMessage(Team.TEAM2.getL(), "Дежурный на эту неделю в команду " + TEAM2 + " - " + text);
+
+        text = excelRepository.findDuty(String.valueOf(TEAM3), date+"T00:00").getLast();
+        sendMessage(Team.TEAM3.getL(), "Дежурный на эту неделю в команду " + TEAM3 + " - " + text);
+    }
     @Override
     public String getBotUsername() {
         return "${bot.name}";
