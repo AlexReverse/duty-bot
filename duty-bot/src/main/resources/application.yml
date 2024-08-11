@@ -1,4 +1,4 @@
-bot.token: '6616805676:AAHO3d7zQpuZ4IcMInVU9jNXKCy2H-dtH2M'
+bot.token: '6616805676:********************************'
 bot.name: 'QDuty_bot'
 
 spring.jpa.hibernate.ddl-auto: update
